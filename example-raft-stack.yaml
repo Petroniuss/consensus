@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  raft-example:
+    image: raft-example
+    hostname: "raft-example-{{.Task.Slot}}"
+    ports:
+      - 8080:8080
+    environment:
+      node_id: "{{.Task.Slot}}"
+      nodes: 3
+      node_base_name: raft-example
+      port: 8080
+    deploy:
+      replicas: 3
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - type: bind
+        source: ./conf/prometheus.yml
+        target: /etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
