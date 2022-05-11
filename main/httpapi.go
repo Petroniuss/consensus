@@ -15,6 +15,8 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.etcd.io/etcd/raft/v3/raftpb"
 	"io"
@@ -29,27 +31,59 @@ type httpKVAPI struct {
 	confChangeC chan<- raftpb.ConfChange
 }
 
+var (
+	appSetValue = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "app_set_value",
+	})
+	appSetValueFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "app_set_value_fail",
+	})
+	appGetValue = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "app_get_value",
+	})
+	appGetValueFail = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "app_get_value_fail",
+	})
+	setDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "app_set_duration_seconds",
+		Buckets: prometheus.LinearBuckets(0.0001, 0.0001, 100),
+	})
+	getDuration = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "app_get_duration_seconds",
+		Buckets: prometheus.LinearBuckets(0.0001, 0.0001, 100),
+	})
+)
+
 func (h *httpKVAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	key := r.RequestURI
 	defer r.Body.Close()
 	switch r.Method {
 	case http.MethodPut:
+		timer := prometheus.NewTimer(setDuration)
+		defer timer.ObserveDuration()
 		v, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Printf("Failed to read on PUT (%v)\n", err)
+			appSetValueFail.Inc()
 			http.Error(w, "Failed on PUT", http.StatusBadRequest)
 			return
 		}
 
 		h.store.Propose(key, string(v))
+		appSetValue.Inc()
 
 		// Optimistic-- no waiting for ack from raft. Value is not yet
 		// committed so a subsequent GET on the key may return old value
 		w.WriteHeader(http.StatusNoContent)
 	case http.MethodGet:
+
+		timer := prometheus.NewTimer(getDuration)
+		defer timer.ObserveDuration()
 		if v, ok := h.store.Lookup(key); ok {
 			w.Write([]byte(v))
+			appGetValue.Inc()
 		} else {
+			appGetValueFail.Inc()
 			http.Error(w, "Failed to GET", http.StatusNotFound)
 		}
 	case http.MethodPost:

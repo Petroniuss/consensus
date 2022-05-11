@@ -1,6 +1,20 @@
 version: '3.7'
 
 services:
+  locust-master:
+    image: locustio/locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./load-tests:/mnt/locust
+    command: -f /mnt/locust/locustfile.py --master -H http://raft-example-1:8080
+  locust-worker:
+      deploy:
+        replicas: 6
+      image: locustio/locust
+      volumes:
+        - ./load-tests:/mnt/locust
+      command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
   raft-example:
     image: raft-example
     hostname: "raft-example-{{.Task.Slot}}"
