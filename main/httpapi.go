@@ -15,12 +15,12 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.etcd.io/etcd/raft/v3/raftpb"
 	"io"
 	"log"
 	"net/http"
 	"strconv"
-
-	"go.etcd.io/etcd/raft/v3/raftpb"
 )
 
 // Handler for a http based key-value store backed by raft
@@ -102,18 +102,12 @@ func (h *httpKVAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // serveHttpKVAPI starts a key-value server with a GET/PUT API and listens.
 func serveHttpKVAPI(kv *kvstore, port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
-	srv := http.Server{
-		Addr: ":" + strconv.Itoa(port),
-		Handler: &httpKVAPI{
-			store:       kv,
-			confChangeC: confChangeC,
-		},
-	}
-	go func() {
-		if err := srv.ListenAndServe(); err != nil {
-			log.Fatal(err)
-		}
-	}()
+	http.Handle("/key", &httpKVAPI{
+		store:       kv,
+		confChangeC: confChangeC,
+	})
+	http.Handle("/metrics", promhttp.Handler())
+	http.ListenAndServe(":"+strconv.Itoa(port), nil)
 
 	// exit when raft goes down
 	if err, ok := <-errorC; ok {
