@@ -19,7 +19,7 @@ services:
     image: raft-example
     hostname: "raft-example-{{.Task.Slot}}"
     ports:
-      - 8080:8080
+      - "8080:8080"
     environment:
       node_id: "{{.Task.Slot}}"
       nodes: 3
@@ -34,4 +34,4 @@ services:
         source: ./conf/prometheus.yml
         target: /etc/prometheus/prometheus.yml
     ports:
-      - 9090:9090
+      - "9090:9090"

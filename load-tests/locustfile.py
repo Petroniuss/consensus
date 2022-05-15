@@ -1,13 +1,45 @@
+import json
+
 from locust import HttpUser, task
 from datetime import datetime
+from dataclasses import dataclass
+
+KEY_NAME = "/key"
+
+
+@dataclass
+class PutRequest:
+    value: str
+    previouslyObservedVersion: int
+
+    def to_json(self):
+        return json.dumps(self.__dict__)
+
 
 class HelloWorldUser(HttpUser):
     @task(1)
     def get_value(self):
-        self.client.get("/key")
+        self.client.get(KEY_NAME)
 
     @task(2)
-    def set_value(self):
+    def get_set_value(self):
+        response = self.client.get(KEY_NAME)
+        prev_version = 0
+
+        # if there's already a value associated with given key.
+        if response.ok:
+            response_body = response.json()
+            prev_version = response_body['version']
+
         now = datetime.now()
         current_time = now.strftime("%H:%M:%S")
-        self.client.put("/key", data=current_time)
+
+        request = PutRequest(
+            value=current_time,
+            previouslyObservedVersion=prev_version
+        )
+
+        # this succeeds only if the version on the server remains unchanged
+        # otherwise it returns { success = false .. }
+        response = self.client.put("/key", data=request.to_json())
+        response_body = response.json()

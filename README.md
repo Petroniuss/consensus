@@ -1,6 +1,6 @@
 1. Build docker image with raft example
 ```shell
-docker build -t raft-example .
+docker build -t raft-example:latest .
 ```
 2. Configure docker enginge to expose prometheus metrics
    https://docs.docker.com/config/daemon/prometheus/#configure-docker
@@ -14,8 +14,10 @@ docker stack deploy -c example-raft-stack.yaml raft
 ```
 5. Set/get value 
 ```shell
-curl -L http://127.0.0.1:8080/my-key -XPUT -d bar
-
+curl -L http://127.0.0.1:8080/my-key -XPUT \
+  -d '{ "value":"v1","previouslyObservedVersion":0 }' \
+  -H 'Content-Type: application/json'
+   
 curl -L http://127.0.0.1:8080/my-key 
 ```
 

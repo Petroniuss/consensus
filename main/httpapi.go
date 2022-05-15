@@ -15,6 +15,7 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -54,6 +55,18 @@ var (
 	})
 )
 
+type putRequest struct {
+	Value                     string `json:"value"`
+	PreviouslyObservedVersion int    `json:"previouslyObservedVersion"`
+}
+
+type PutRequestResponse struct {
+	Success        bool   `json:"success"`
+	Key            string `json:"key"`
+	CurrentValue   string `json:"value"`
+	CurrentVersion int    `json:"version"`
+}
+
 func (h *httpKVAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	key := r.RequestURI
 	defer r.Body.Close()
@@ -65,22 +78,44 @@ func (h *httpKVAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Printf("Failed to read on PUT (%v)\n", err)
 			appSetValueFail.Inc()
-			http.Error(w, "Failed on PUT", http.StatusBadRequest)
+			http.Error(w, "Failed to read request body.", http.StatusBadRequest)
 			return
 		}
 
-		h.store.Propose(key, string(v))
-		appSetValue.Inc()
+		var request putRequest
+		err = json.Unmarshal(v, &request)
+		if err != nil {
+			log.Printf("Failed to deserialize json on PUT (%v)\n", err)
+			http.Error(w, "Invalid request body.", http.StatusBadRequest)
+			return
+		}
 
-		// Optimistic-- no waiting for ack from raft. Value is not yet
-		// committed so a subsequent GET on the key may return old value
-		w.WriteHeader(http.StatusNoContent)
+		value := request.Value
+		prevVersion := request.PreviouslyObservedVersion
+
+		result, _ := h.store.Propose(key, value, prevVersion)
+		if result.Success {
+			appSetValue.Inc()
+		} else {
+			appSetValueFail.Inc()
+		}
+
+		response := PutRequestResponse{
+			Key:            key,
+			CurrentValue:   result.CurrentValue.Val,
+			CurrentVersion: result.CurrentValue.Version,
+			Success:        result.Success,
+		}
+
+		_ = json.NewEncoder(w).Encode(response)
+		w.WriteHeader(http.StatusOK)
+
 	case http.MethodGet:
-
 		timer := prometheus.NewTimer(getDuration)
 		defer timer.ObserveDuration()
 		if v, ok := h.store.Lookup(key); ok {
-			w.Write([]byte(v))
+			bytes, _ := json.Marshal(v)
+			_, _ = w.Write(bytes)
 			appGetValue.Inc()
 		} else {
 			appGetValueFail.Inc()
@@ -136,12 +171,12 @@ func (h *httpKVAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // serveHttpKVAPI starts a key-value server with a GET/PUT API and listens.
 func serveHttpKVAPI(kv *kvstore, port int, confChangeC chan<- raftpb.ConfChange, errorC <-chan error) {
-	http.Handle("/key", &httpKVAPI{
+	http.Handle("/", &httpKVAPI{
 		store:       kv,
 		confChangeC: confChangeC,
 	})
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":"+strconv.Itoa(port), nil)
+	_ = http.ListenAndServe(":"+strconv.Itoa(port), nil)
 
 	// exit when raft goes down
 	if err, ok := <-errorC; ok {
