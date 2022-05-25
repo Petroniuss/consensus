@@ -1,6 +1,27 @@
 version: '3.7'
+volumes:
+
+  grafana_data: {}
 
 services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - 8083:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+    depends_on:
+      - redis
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
   locust-master:
     image: locustio/locust
     ports:
@@ -10,7 +31,7 @@ services:
     command: -f /mnt/locust/locustfile.py --master -H http://raft-example-1:8080
   locust-worker:
       deploy:
-        replicas: 6
+        replicas: 1
       image: locustio/locust
       volumes:
         - ./load-tests:/mnt/locust
@@ -27,6 +48,14 @@ services:
       port: 8080
     deploy:
       replicas: 3
+
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
   prometheus:
     image: prom/prometheus
     volumes:
@@ -35,3 +64,20 @@ services:
         target: /etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - DS_PROMETHEUS=Prometheus
+    restart: unless-stopped
+
+    ports:
+      - 8085:3000
+    labels:
+      org.label-schema.group: "monitoring"

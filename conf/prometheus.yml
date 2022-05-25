@@ -32,3 +32,8 @@ scrape_configs:
 
     static_configs:
       - targets: ['docker.for.mac.host.internal:9323', 'raft-example-1:8080', 'raft-example-2:8080', 'raft-example-3:8080']
+  - job_name: cadvisor
+    scrape_interval: 1s
+    static_configs:
+      - targets:
+          - cadvisor:8080
