@@ -14,14 +14,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-
-    depends_on:
-      - redis
-  redis:
-    image: redis:latest
-    container_name: redis
-    ports:
-      - 6379:6379
+  locust-exporter:
+    image: containersol/locust_exporter
+    container_name: locust-exporter
+    environment:
+      LOCUST_EXPORTER_URI: http://locust-master:8089
   locust-master:
     image: locustio/locust
     ports:
@@ -31,11 +28,19 @@ services:
     command: -f /mnt/locust/locustfile.py --master -H http://raft-example-1:8080
   locust-worker:
       deploy:
-        replicas: 1
+        replicas: 4
+        resources:
+          limits:
+            cpus: '0.5'
+            memory: 512M
+          reservations:
+            cpus: '0.5'
+            memory: 128M
       image: locustio/locust
       volumes:
         - ./load-tests:/mnt/locust
       command: -f /mnt/locust/locustfile.py --worker --master-host locust-master
+
   raft-example:
     image: raft-example
     hostname: "raft-example-{{.Task.Slot}}"
@@ -48,13 +53,12 @@ services:
       port: 8080
     deploy:
       replicas: 3
-
       resources:
         limits:
-          cpus: '0.50'
+          cpus: '0.5'
           memory: 512M
         reservations:
-          cpus: '0.25'
+          cpus: '0.5'
           memory: 128M
   prometheus:
     image: prom/prometheus

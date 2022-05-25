@@ -21,6 +21,14 @@ class HelloWorldUser(HttpUser):
     def get_value(self):
         self.client.get(KEY_NAME)
 
+    @task(3)
+    def get_value_2(self):
+        self.client.get("http://raft-example-2:8080/key")
+
+    @task(4)
+    def get_value_3(self):
+        self.client.get("http://raft-example-3:8080/key")
+
     @task(2)
     def get_set_value(self):
         response = self.client.get(KEY_NAME)
