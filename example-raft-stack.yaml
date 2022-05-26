@@ -7,6 +7,15 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
+    command: --allow_dynamic_housekeeping=false --max_housekeeping_interval=10s --housekeeping_interval=1s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 128M
     ports:
       - 8083:8080
     volumes:
@@ -28,7 +37,7 @@ services:
     command: -f /mnt/locust/locustfile.py --master -H http://raft-example-1:8080
   locust-worker:
       deploy:
-        replicas: 4
+        replicas: 2
         resources:
           limits:
             cpus: '0.5'
