@@ -26,7 +26,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": 6,
-  "iteration": 1653567828047,
+  "iteration": 1653652850548,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -449,10 +449,6 @@
       "decimals": 2,
       "editable": true,
       "error": false,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "fill": 1,
       "fillGradient": 0,
       "grid": {},
@@ -570,10 +566,6 @@
       "decimals": 2,
       "editable": true,
       "error": false,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
-      },
       "fill": 1,
       "fillGradient": 0,
       "grid": {},
@@ -1203,7 +1195,7 @@
         "y": 43
       },
       "hiddenSeries": false,
-      "id": 13,
+      "id": 34,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
@@ -1234,21 +1226,25 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "sum by (name) (rate(container_network_receive_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[1m]))",
-          "intervalFactor": 10,
+          "intervalFactor": 1,
           "legendFormat": "{{ name }}",
-          "metric": "container_network_receive_bytes_total",
+          "metric": "container_memory_usage",
           "refId": "A",
-          "step": 10
+          "step": 1
         }
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Container Network Input",
+      "title": "Network input",
       "tooltip": {
         "msResolution": true,
         "shared": true,
-        "sort": 2,
+        "sort": 0,
         "value_type": "cumulative"
       },
       "type": "graph",
@@ -1259,12 +1255,14 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:188",
           "format": "bytes",
           "logBase": 1,
           "min": 0,
           "show": true
         },
         {
+          "$$hashKey": "object:189",
           "format": "short",
           "logBase": 1,
           "show": false
@@ -1296,7 +1294,7 @@
         "y": 50
       },
       "hiddenSeries": false,
-      "id": 14,
+      "id": 35,
       "isNew": true,
       "legend": {
         "alignAsTable": true,
@@ -1327,21 +1325,25 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "sum by (name) (rate(container_network_transmit_bytes_total{instance=~\"$host\",name=~\"$container\",name=~\".+\"}[1m]))",
-          "intervalFactor": 10,
+          "intervalFactor": 1,
           "legendFormat": "{{ name }}",
-          "metric": "container_network_transmit_bytes_total",
+          "metric": "container_memory_usage",
           "refId": "A",
-          "step": 10
+          "step": 1
         }
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Container Network Output",
+      "title": "Network output",
       "tooltip": {
         "msResolution": true,
         "shared": true,
-        "sort": 2,
+        "sort": 0,
         "value_type": "cumulative"
       },
       "type": "graph",
@@ -1352,12 +1354,14 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:188",
           "format": "bytes",
           "logBase": 1,
           "min": 0,
           "show": true
         },
         {
+          "$$hashKey": "object:189",
           "format": "short",
           "logBase": 1,
           "show": false
@@ -1668,6 +1672,99 @@
       "dashes": false,
       "datasource": "Prometheus",
       "decimals": 0,
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 72
+      },
+      "hiddenSeries": false,
+      "id": 12,
+      "interval": "",
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": false,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "paceLength": 10,
+      "percentage": false,
+      "pluginVersion": "8.5.3",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "expr": "locust_workers_count",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "Workers",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Workers",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "decimals": 0,
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "decimals": 0,
+          "format": "short",
+          "logBase": 1,
+          "show": false
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "Prometheus",
+      "decimals": 0,
       "editable": true,
       "error": false,
       "fieldConfig": {
@@ -1896,102 +1993,9 @@
       "yaxis": {
         "align": false
       }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "Prometheus",
-      "decimals": 0,
-      "fieldConfig": {
-        "defaults": {
-          "links": []
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 88
-      },
-      "hiddenSeries": false,
-      "id": 12,
-      "interval": "",
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": false,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "links": [],
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "paceLength": 10,
-      "percentage": false,
-      "pluginVersion": "8.5.3",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "expr": "locust_workers_count",
-          "format": "time_series",
-          "instant": false,
-          "interval": "",
-          "intervalFactor": 1,
-          "legendFormat": "Workers",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeRegions": [],
-      "title": "Workers",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "decimals": 0,
-          "format": "short",
-          "logBase": 1,
-          "show": true
-        },
-        {
-          "decimals": 0,
-          "format": "short",
-          "logBase": 1,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 36,
   "style": "dark",
   "tags": [],
@@ -2037,10 +2041,14 @@
         "current": {
           "selected": true,
           "text": [
-            "All"
+            "raft_raft-example.1.6d8o6i07zljx4jo6lo4azvhpr",
+            "raft_raft-example.2.mcnhj93lzuyoxcl5kdpqp6l94",
+            "raft_raft-example.3.nnnekmsoek4cys0vp8ngc2o9k"
           ],
           "value": [
-            "$__all"
+            "raft_raft-example.1.6d8o6i07zljx4jo6lo4azvhpr",
+            "raft_raft-example.2.mcnhj93lzuyoxcl5kdpqp6l94",
+            "raft_raft-example.3.nnnekmsoek4cys0vp8ngc2o9k"
           ]
         },
         "datasource": {
@@ -2101,6 +2109,6 @@
   "timezone": "browser",
   "title": "Consensus metrics",
   "uid": "bbRgkz97z",
-  "version": 4,
+  "version": 6,
   "weekStart": ""
 }
